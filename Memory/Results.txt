@@ -1,0 +1,34 @@
+SimpleAdd Results
+
+# time   0, addr 80020000, data zzzzzzzz, en 0
+# time  10, addr 80020000, data zzzzzzzz, en 1
+# time  20, addr 80020004, data 27bdffe8, en 1
+# time  30, addr 80020004, data afbe0014, en 1
+# time  50, addr 80020004, data aaaaaaaa, en 1
+# time  60, addr 80020005, data aaaaaaaa, en 1
+# time  70, addr 80020006, data aaaaaaaa, en 1
+# time  80, addr 80020007, data aaaaaaaa, en 1
+# time  90, addr 80020004, data aaaaaaaa, en 1
+# time 100, addr 80020004, data 33221100, en 1
+# time 110, addr 80020007, data zzzzzz00, en 1
+# time 120, addr 80020007, data zzzzzz33, en 1
+
+_________________________________________________
+
+BubbleSort Results
+
+# time   0, addr 80020000, data zzzzzzzz, busy 0
+# time  20, addr 80020000, data 27bdffc8, busy 1
+# time  30, addr 80020000, data afbf0034, busy 1
+# time  40, addr 80020000, data afbe0030, busy 1
+# time  50, addr 80020000, data 03a0f021, busy 0
+# time  60, addr 80020000, data 03a0f021, busy 1
+# time 130, addr 80020000, data 03a0f021, busy 0
+# time 140, addr 80020000, data aaaaaaaa, busy 1
+# time 150, addr 80020000, data bbbbbbbb, busy 1
+# time 160, addr 80020000, data cccccccc, busy 1
+# time 170, addr 80020000, data dddddddd, busy 1
+# time 180, addr 80020000, data eeeeeeee, busy 1
+# time 190, addr 80020000, data ffffffff, busy 1
+# time 200, addr 80020000, data 00000000, busy 1
+# time 210, addr 80020000, data 11111111, busy 0
