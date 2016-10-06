@@ -63,14 +63,16 @@ always@(posedge clk) begin
         * to the LSB in order to be read by data_out variable
         */
        sz_byte: begin 
-         if(byteaccess == 0) data_out[7:0] <= mem[pointer] >> 24;
-         else if(byteaccess == 1) data_out[7:0] <= mem[pointer] >> 16;
-         else if(byteaccess == 2) data_out[7:0] <= mem[pointer] >> 8;
-         else if(byteaccess == 3) data_out[7:0] <= mem[pointer];
-         data_out[31:8] <= 'z;  //add z to the rest of the word.
+         if(~busy) begin
+           if(byteaccess == 0) data_out[7:0] <= mem[pointer] >> 24;
+           else if(byteaccess == 1) data_out[7:0] <= mem[pointer] >> 16;
+           else if(byteaccess == 2) data_out[7:0] <= mem[pointer] >> 8;
+           else if(byteaccess == 3) data_out[7:0] <= mem[pointer];
+           data_out[31:8] <= 'z;  //add z to the rest of the word.
+         end
        end
 
-       sz_word: data_out[31:0] <= mem[pointer];
+       sz_word: if(~busy) data_out[31:0] <= mem[pointer];
 
        sz_4word: begin
          if(count > 0) begin 
@@ -91,13 +93,15 @@ always@(posedge clk) begin
      end else begin 
        case(access_size)
        sz_byte: begin
-         if(byteaccess == 0)  mem[pointer] <= {data_in[7:0], mem[pointer][23:0]};
-         else if(byteaccess == 1)  mem[pointer] <= {mem[pointer][31:24], data_in[7:0], mem[pointer ][15:0]};
-         else if(byteaccess == 2) mem[pointer] <= {mem[pointer][31:16], data_in[7:0], mem[pointer][7:0]};
-         else if(byteaccess == 3) mem[pointer] <= {mem[pointer][31:8], data_in[7:0]};
+         if(~busy) begin
+           if(byteaccess == 0)  mem[pointer] <= {data_in[7:0], mem[pointer][23:0]};
+           else if(byteaccess == 1)  mem[pointer] <= {mem[pointer][31:24], data_in[7:0], mem[pointer ][15:0]};
+           else if(byteaccess == 2) mem[pointer] <= {mem[pointer][31:16], data_in[7:0], mem[pointer][7:0]};
+           else if(byteaccess == 3) mem[pointer] <= {mem[pointer][31:8], data_in[7:0]};
+         end
        end
 
-       sz_word: mem[pointer] <= data_in[31:0];
+       sz_word: if(~busy) mem[pointer] <= data_in[31:0];
 
        sz_4word: begin
          if(count > 0) begin 
