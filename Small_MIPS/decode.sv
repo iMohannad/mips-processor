@@ -11,3 +11,5 @@ module decode(
 
 assign {opcode, rs, rt, td, shift_amount, func} = instruction;
 assign imm = instruction[15:0];
+
+endmodule
