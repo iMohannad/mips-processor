@@ -1,11 +1,7 @@
 module pc (
   input clk,
   input reset,
-  input [31:0] addr,
   input [31:0] pc_in,
-  input [1:0] access_size,
-  input rd_wr,
-  input enable,
   output [31:0] pc_out,
   output [31:0] next_pc);
 
@@ -26,4 +22,4 @@ always @ (posedge clk) begin
 end
 
 
-endmodule // fetcch
+endmodule // pc
