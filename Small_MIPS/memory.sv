@@ -9,7 +9,7 @@ module memory (
   output reg [31:0] data_out,
   output busy);
 
-`include "mips.sv"
+`include "params.sv"
 
 /* Since the address starts from 80020000, we need to substract this offset 
  * from the address in order to access mem where the address starts at 0 
