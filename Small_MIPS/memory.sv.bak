@@ -31,7 +31,7 @@ reg [1:0] byteaccess;  //for access specific bytes in a word
 
 always @* begin
   byteaccess[1:0] = addr % 4; 
-  pointer = ((addr - offset)  / 'h4) + 1;
+  pointer = ((addr - offset)  / 'h4);
 end 
 
 /* This block checks the access size is 4 or 8 words

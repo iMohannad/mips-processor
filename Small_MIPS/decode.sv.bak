@@ -9,7 +9,7 @@ module decode(
   output wire [15:0] imm
   );
 
-assign {opcode, rs, rt, rd, shift_amount, func} = instruction;
+assign {opcode, rs, rt, td, shift_amount, func} = instruction;
 assign imm = instruction[15:0];
 
 endmodule
