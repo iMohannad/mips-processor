@@ -28,7 +28,6 @@ always @ (op1 or op2 or ar_op or shift_amount) begin
         6'b101011: data_out <= op1 + op2;
       endcase
     end
-    endcase
   endcase
 
 end

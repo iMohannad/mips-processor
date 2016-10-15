@@ -20,6 +20,7 @@ always @ (op1 or op2 or ar_op or shift_amount) begin
     6'b001000: data_out <= op1 + op2; //ADDIU
     6'b001001: data_out <= op1 + op2; //AddU
     6'b101011: data_out <= op1 + op2; //SW
+    6'b100011: data_out <= op1 + op2;
     default: begin
       case(ar_op)
         6'b100001: data_out <= op1 + op2;

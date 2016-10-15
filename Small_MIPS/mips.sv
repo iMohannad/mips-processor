@@ -1,3 +1,12 @@
+/*
+ * li       001001
+ * sw       101011
+ * lw       100011
+ * mv       000000
+ * ADDIU    001001
+ * AddU     000000
+ */
+
 module mips (
     input clk,
     input reset,
@@ -18,36 +27,46 @@ parameter [31:0] ra_init = 0;
 
 
 // pc variables
-//logic [31:0] pc_in;
+logic [31:0] pc_in;
 logic [31:0] pc_out;  //goes to instruction memory
 /*it's pc_out+1 which should be an input to a mux to decide in case of jump or branch*/
 logic [31:0] next_pc; //pc_in + 4
+reg [2:0] counter = 0;
 
-/*always @(posedge clk) begin
+always @ (posedge clk) begin
   if (reset) begin
-    next_pc <= mem_start;
+    pc_in <= mem_start;
+    counter <= 0;
+  end else begin
+    if(counter == 4) begin
+      counter <= 0;
+      pc_in = next_pc;
+    end
+    else counter <= counter + 1;
   end
-end*/
+
+end
 
 
-
-pc pc(.clk(clk), .reset(reset), .pc_in(next_pc), .pc_out(pc_out), .next_pc(next_pc));
+pc pc(.clk(clk), .reset(reset), .pc_in(pc_in), .pc_out(pc_out), .next_pc(next_pc));
 
 // instruction memory variables
 logic im_rw = 1;  //always 1 because we always read from instruction memory
 logic [1:0] im_access_sz = sz_word;
 logic busy_inst_mm;
-logic [31:0] instruction; //the instruction address from inst_memory
+reg [31:0] instruction; //the instruction address from inst_memory
+
+
+memory inst_memory(.clk(clk), .addr(pc_out), .data_in(pc_out), .access_size(im_access_sz), .rd_wr(im_rw),
+  .enable(~reset), .data_out(instruction), .busy(busy_inst_mm));
 
 always @ (posedge clk) begin
-  instr_in = pc_out;
-  instr_addr = pc_out;
+  if(pc_out == 'h80020048) instr_addr <= 0;
+  else begin
+    instr_in = instruction;
+    instr_addr = pc_out;
+  end
 end
-
-
-
-memory inst_memory(.clk(clk), .addr(pc_out), .data_in(pc_out), .access_size(2'b01), .rd_wr(im_rw),
-  .enable(~reset), .data_out(instruction), .busy(busy_inst_mm));
 
 //decoder variables
 logic [4:0] rs;
@@ -63,14 +82,29 @@ decode decoder(.instruction(instruction), .opcode(opcode), .rs(rs), .rt(rt), .rd
 
 //regfile variables
 logic [31:0] wr_data_reg; //the data which will be written on target register
-logic wr_en_reg = (opcode = 6'b101011 | ((opcode == 0) && (func == 6'b001000)) | opcode == 6'b001001) ? 1 : 0; //to enable writing on regfile
+logic wr_en_reg;
+always@(posedge clk) begin
+  if(opcode != 6'b101011 && counter == 4)  wr_en_reg <= 1;
+  else wr_en_reg <= 0; //to enable writing on regfile
+end
+//logic wr_en_reg = (opcode == 6'b101011) ? 0 : 1; //to enable writing on regfile
+
 logic [31:0] rd0_data; //the data coming out from rt
 logic [31:0] rd1_data; //the data coming out from rd
 logic [4:0] wr_num;
 
+logic aluSrc;
+assign aluSrc = opcode[3] | opcode[5];
+
+/* wr_num is the register we are writing back into in regFile.
+ * if it's load instruction, the write back register is rt
+ * otherwise, it should be rd
+ */
 always @ ( * ) begin
-  if((opcode == 6'b001001) | (opcode == 6'b100011)) wr_num <= rt;
-  else wr_num <= rd;
+  if((opcode == 6'b001001) | (opcode == 6'b100011) | aluSrc) begin
+    wr_num = rt;
+  end
+  else wr_num = rd;
 end
 
 regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
@@ -82,11 +116,11 @@ wire [31:0] op1;
 logic [31:0] op2;
 
 
-logic aluSrc = opcode[3];
+
 
 //assign  op2 = aluSrc ? rd1_data :  {{16{imm[15]}}, imm[15:0]} ;
 always @ ( * ) begin
-  if(aluSrc) op2 <= {{16{imm[15]}}, imm[15:0]};
+  if(aluSrc) op2 = {{16{imm[15]}}, imm[15:0]};
   else op2 <= rd1_data;
 end
 
@@ -96,8 +130,9 @@ alu alu(.op1(rd0_data), .op2(op2), .opcode(opcode), .ar_op(func), .shift_amount(
 
 logic dm_rw;
 always @ ( * ) begin
-  if(opcode == 6'b101011) dm_rw <= 0;
-  else dm_rw <= 1;
+  //we write into memory only if we are storing word
+  if(opcode == 6'b101011) dm_rw = 0;
+  else dm_rw = 1;
 end
 
 logic [31:0] data_out_mem;  //the output from data memory
@@ -105,15 +140,16 @@ logic busy_data_mm;  //a signal indicates if the data memory is busy
 logic memToReg;
 
 always @ ( * ) begin
-  if(opcode == 6'b001001) memToReg <= 1;
-  else memToReg <= 0;
+  if(opcode == 6'b100011) memToReg = 1;
+  else memToReg = 0;
 end
 
 assign data_rd_wr = dm_rw;
 
 always @ ( * ) begin
-  if(memToReg) wr_data_reg <= data_out_alu;
-  else wr_data_reg <= data_out_mem;
+  //if(func == 6'h21 && opcode == 6'b000000) wr_data_reg = rd0_data;
+  if(memToReg) wr_data_reg = data_out_mem;
+  else wr_data_reg = data_out_alu;
 end
 //assign wr_data_reg = memToReg ? data_out_mem : data_out_alu;
 
@@ -127,5 +163,6 @@ memory data_memory(.clk(clk), .addr(data_out_alu), .data_in(rd1_data), .access_s
     data_in <= rd1_data;
     data_out <= data_out_mem;
   end
+
 
 endmodule

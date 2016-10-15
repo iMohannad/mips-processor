@@ -1,6 +1,6 @@
 
 module memory (
-  input clk, 
+  input clk,
   input [31:0] addr,
   input [31:0] data_in,
   input [1:0] access_size,
@@ -11,13 +11,13 @@ module memory (
 
 `include "params.sv"
 
-/* Since the address starts from 80020000, we need to substract this offset 
- * from the address in order to access mem where the address starts at 0 
+/* Since the address starts from 80020000, we need to substract this offset
+ * from the address in order to access mem where the address starts at 0
  * and the increment between every word in memory is 1. because each word
  * is stored in one cell.
  */
-parameter offset = 'h80020000; 
-reg [31:0] mem [0:mem_depth/4-1];
+parameter offset = 'h80020000;
+reg [31:0] mem [0:(mem_depth/4)-1];
 
 //populate the memory with mem_file
 initial $readmemh(mem_file, mem);
@@ -30,12 +30,12 @@ reg [1:0] byteaccess;  //for access specific bytes in a word
 
 
 always @* begin
-  byteaccess[1:0] = addr % 4; 
-  pointer = ((addr - offset)  / 'h4) + 1;
-end 
+  byteaccess[1:0] = addr % 4;
+  pointer = ((addr - offset)  / 'h4);
+end
 
 /* This block checks the access size is 4 or 8 words
- * Then set the counter to 4 or 8 depending on the access size 
+ * Then set the counter to 4 or 8 depending on the access size
  */
 always @(posedge clk) begin
     if(enable) begin
@@ -48,10 +48,10 @@ always @(posedge clk) begin
          address = addr;
       end
     end
-end 
+end
 
 
-//set to '1' if memory is not available due work working on a multi-word read or write 
+//set to '1' if memory is not available due work working on a multi-word read or write
 assign busy = (|count & enable);
 
 always@(posedge clk) begin
@@ -62,7 +62,7 @@ always@(posedge clk) begin
         * Thus, byteaccess checks which byte needs to be read, then shift the byte
         * to the LSB in order to be read by data_out variable
         */
-       sz_byte: begin 
+       sz_byte: begin
          if(~busy) begin
            if(byteaccess == 0) data_out[7:0] <= mem[pointer] >> 24;
            else if(byteaccess == 1) data_out[7:0] <= mem[pointer] >> 16;
@@ -75,7 +75,7 @@ always@(posedge clk) begin
        sz_word: if(~busy) data_out[31:0] <= mem[pointer];
 
        sz_4word: begin
-         if(count > 0) begin 
+         if(count > 0) begin
             data_out[31:0] <= mem[address - offset];
             count <= count - 1;
             address <= address + 1;
@@ -83,14 +83,14 @@ always@(posedge clk) begin
        end
 
        sz_8word: begin
-         if(count > 0) begin 
+         if(count > 0) begin
             data_out[31:0] <= mem[address - offset];
             count <= count - 1;
             address <= address + 1;
          end
        end //end of if(rd_wt)
        endcase
-     end else begin 
+     end else begin
        case(access_size)
        sz_byte: begin
          if(~busy) begin
@@ -101,10 +101,12 @@ always@(posedge clk) begin
          end
        end
 
-       sz_word: if(~busy) mem[pointer] <= data_in[31:0];
-
+       sz_word: begin
+          if(~busy) mem[pointer] <= data_in[31:0];
+          data_out <= mem[pointer];
+       end
        sz_4word: begin
-         if(count > 0) begin 
+         if(count > 0) begin
             mem[address - offset] <= data_in[31:0];
             count <= count - 1;
             address <= address + 1;
@@ -112,7 +114,7 @@ always@(posedge clk) begin
        end
 
        sz_8word: begin
-         if(count > 0) begin 
+         if(count > 0) begin
             mem[address - offset] <= data_in[31:0];
             count <= count - 1;
             address <= address + 1;
@@ -123,7 +125,7 @@ always@(posedge clk) begin
   end else begin  //if enable is 0, output z
      data_out[31:0] <= 'hz;
   end
-    
+
 end //always
 
 endmodule
