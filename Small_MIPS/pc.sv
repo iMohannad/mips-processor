@@ -12,7 +12,7 @@ module pc (
 always @ (posedge clk) begin
   if (reset) begin
     pc_out <= mem_start;
-    next_pc <= mem_start+4;
+    next_pc <= mem_start;
   end
   else begin
     pc_out <= pc_in;
