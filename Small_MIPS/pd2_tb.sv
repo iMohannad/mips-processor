@@ -15,7 +15,6 @@ module tb_SimpleAdd;
 	logic dm_rw;
 	logic [31:0] dm_addr, dm_din, dm_dout;
 	logic [1:0] dm_access_sz = sz_word;
-	logic [2:0] stages;
   /*memory dmem(.clk(clk), .addr(dm_addr), .data_in(dm_din), .data_out(dm_dout),
 		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset), .busy(busy_data_mm));
 */

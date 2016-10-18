@@ -15,7 +15,6 @@ module tb_SimpleAdd;
 	logic dm_rw;
 	logic [31:0] dm_addr, dm_din, dm_dout;
 	logic [1:0] dm_access_sz = sz_word;
-	logic [2:0] stages;
   /*memory dmem(.clk(clk), .addr(dm_addr), .data_in(dm_din), .data_out(dm_dout),
 		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset), .busy(busy_data_mm));
 */
@@ -32,17 +31,17 @@ module tb_SimpleAdd;
         clk = 1; forever #5 clk = ~clk;
     end
 
-	bit [31:0] test_pc [0:17];
+	bit [31:0] test_pc [0:3];
 	bit [31:0] num = 32'h80020000;
     initial begin
-		for(int i=0; i<18;i++) begin
+		/*for(int i=0; i<18;i++) begin
 			test_pc[i] = num;
 			num = num + 4;
-		end
-		/*test_pc[0] <= 32'h80020014;
+		end*/
+		test_pc[0] <= 32'h80020014;
 		test_pc[1] <= 32'h8002001c;
 		test_pc[2] <= 32'h80020028;
-		test_pc[3] <= 32'h80020030;*/
+		test_pc[3] <= 32'h80020030;
 		reset <= 1;
 		#10 reset <= 0;
 

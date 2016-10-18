@@ -10,12 +10,12 @@
 module mips (
     input clk,
     input reset,
-    output reg [31:0] instr_addr,
-    output reg [31:0] instr_in,
-    output reg [31:0] data_addr,
-    output reg [31:0] data_in,
-    output  data_rd_wr,
-    output reg [31:0] data_out
+    output [31:0] instr_addr,
+    output [31:0] instr_in,
+    output [31:0] data_addr,
+    output [31:0] data_in,
+    output data_rd_wr,
+    output [31:0] data_out
 );
 
 `include "params.sv"
@@ -41,13 +41,12 @@ logic [1:0] im_access_sz = sz_word;
 logic busy_inst_mm;
 reg [31:0] instruction; //the instruction address from inst_memory
 
+assign instr_in = instruction;
+assign instr_addr = pc_out;
 
 memory inst_memory(.clk(clk), .addr(pc_out), .data_in(pc_out), .access_size(im_access_sz), .rd_wr(im_rw),
   .enable(~reset), .data_out(instruction), .busy(busy_inst_mm));
 
-// always @ (posedge clk) begin
-//   if(pc_out == 'h80020048) instr_addr <= 0;
-// end
 
 //decoder variables
 logic [4:0] rs;
@@ -63,16 +62,13 @@ decode decoder(.instruction(instruction), .opcode(opcode), .rs(rs), .rt(rt), .rd
 
 //regfile variables
 logic [31:0] wr_data_reg; //the data which will be written on target register
-logic wr_en_reg;
-always@( *) begin
-  if(opcode != 6'b101011)  wr_en_reg <= 1;
-  else wr_en_reg <= 0; //to enable writing on regfile
-end
-//logic wr_en_reg = (opcode == 6'b101011) ? 0 : 1; //to enable writing on regfile
+//enable writing on register file
+wire wr_en_reg = (opcode != 6'b101011 && counter == 4) ? 1 : 0;
+
 
 logic [31:0] rd0_data; //the data coming out from rt
 logic [31:0] rd1_data; //the data coming out from rd
-logic [4:0] wr_num;
+wire [4:0] wr_num;  //the register number in writeback stage
 
 logic aluSrc;
 assign aluSrc = opcode[3] | opcode[5];
@@ -81,84 +77,73 @@ assign aluSrc = opcode[3] | opcode[5];
  * if it's load instruction, the write back register is rt
  * otherwise, it should be rd
  */
-always @ ( * ) begin
-  if((opcode == 6'b001001) | (opcode == 6'b100011) | aluSrc) begin
-    wr_num = rt;
-  end
-  else wr_num = rd;
-end
+ assign wr_num = ((opcode == 6'b001001) | (opcode == 6'b100011) | aluSrc) ? rt : rd;
+
 
 regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
   regs(.clk(clk), .reset(reset), .wr_num(wr_num), .wr_data(wr_data_reg), .wr_en(wr_en_reg),
   .rd0_num(rs), .rd0_data(rd0_data), .rd1_num(rt), .rd1_data(rd1_data));
 
-logic [31:0] data_out_alu;
-logic [31:0] op2;
-logic [31:0] data_alu_reg;
 
+logic [31:0] data_out_alu;  //data coming out from alu
+wire [31:0] op2;
+//logic [31:0] data_alu_reg; //register to hold the data coming out from alu
 
+//two registers which saves op1 and op2 repectively to make alu run in 3rd cycle
 logic [31:0] A, B;
 
-//assign  op2 = aluSrc ? rd1_data :  {{16{imm[15]}}, imm[15:0]} ;
-always @ ( * ) begin
-  if(aluSrc) op2 = {{16{imm[15]}}, imm[15:0]};
-  else op2 <= rd1_data;
-end
+
+//mux to decide which input should go to ALU.
+assign  op2 = aluSrc ? {{16{imm[15]}}, imm[15:0]} : rd1_data;
+
 
 
 alu alu(.op1(A), .op2(B), .opcode(opcode), .ar_op(func), .shift_amount(shift_amount), .data_out(data_out_alu));
 
 
+//dm_rw sets to 0 (writing) in case of store word only.
+//counter is checked to avoid wriing previous or subsequent instructions
+wire dm_rw = (opcode == 6'b101011 && counter == 3) ? 0 : 1;
 
-logic dm_rw;
-always @ ( * ) begin
-  //we write into memory only if we are storing word
-  if(opcode == 6'b101011 && counter == 3) dm_rw = 0;
-  else dm_rw = 1;
-end
 
 logic [31:0] data_out_mem;  //the output from data memory
 logic busy_data_mm;  //a signal indicates if the data memory is busy
-logic memToReg;
+wire memToReg;  //either takes the data from memory or from ALU in write back stage
 
 //only if load we take data from memory
-always @ ( * ) begin
-  if(opcode == 6'b100011) memToReg = 1;
-  else memToReg = 0;
-end
+assign memToReg = (opcode == 6'b100011) ? 1 : 0;
 
+//to assign the output of memory writing to a pin in the processor - used in testbench
 assign data_rd_wr = dm_rw;
 logic[31:0] wr_data_reg_temp;
 
 always @ ( * ) begin
   //if(func == 6'h21 && opcode == 6'b000000) wr_data_reg = rd0_data;
-  if(memToReg) wr_data_reg_temp = data_out_mem;
-  else wr_data_reg_temp = data_alu_reg;
+  if(memToReg) wr_data_reg = data_out_mem;
+  else wr_data_reg = data_out_alu;
 end
 //assign wr_data_reg = memToReg ? data_out_mem : data_out_alu;
 
 
 
-memory data_memory(.clk(clk), .addr(data_out_alu), .data_in(rd1_data), .access_size(2'b01), .rd_wr(dm_rw),
+memory data_memory(.clk(clk), .addr(data_out_alu), .data_in(rd1_data), .access_size(im_access_sz), .rd_wr(dm_rw),
   .enable(~reset), .data_out(data_out_mem), .busy(busy_data_mm));
 
-always @ (posedge clk) begin
-  data_addr <= data_out_alu;
-  data_in <= rd1_data;
-  data_out <= data_out_mem;
-end
+
+assign data_addr = data_out_alu;
+assign data_in = A;
+assign data_out = data_out_mem;
+
 
 always @ (posedge clk) begin
   if (reset) begin
     pc_in <= mem_start;
     counter <= 0;
+
   end
   else begin
     case (counter)
       0: begin
-
-        instr_in <= instruction;
-
         counter <= counter + 1;
       end
       1: begin
@@ -168,8 +153,6 @@ always @ (posedge clk) begin
         counter <= counter + 1;
       end
       2: begin
-        //save the alu output in another register to have in the next clock cycle
-        data_alu_reg <= data_out_alu;
         counter <= counter + 1;
       end
       3: begin
@@ -178,12 +161,10 @@ always @ (posedge clk) begin
           pc_in <= A;
         end else begin
           pc_in <= next_pc;
-          wr_data_reg <= wr_data_reg_temp;
         end
         counter <= counter + 1;
       end
       4: begin
-        instr_addr <= pc_out;
         counter <= 0;
       end
 
