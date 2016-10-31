@@ -103,7 +103,7 @@ always@(posedge clk) begin
 
        sz_word: begin
           if(~busy) mem[pointer] <= data_in[31:0];
-          //data_out <= mem[pointer];
+          data_out <= mem[pointer];
        end
        sz_4word: begin
          if(count > 0) begin

@@ -31,21 +31,21 @@ module tb_SimpleAdd;
         clk = 1; forever #5 clk = ~clk;
     end
 
-	bit [31:0] test_pc [0:3];
+	bit [31:0] test_pc [0:17];
 	bit [31:0] num = 32'h80020000;
     initial begin
-		/*for(int i=0; i<18;i++) begin
+		for(int i=0; i<18;i++) begin
 			test_pc[i] = num;
 			num = num + 4;
-		end*/
-		test_pc[0] <= 32'h80020014;
+		end
+		/*test_pc[0] <= 32'h80020014;
 		test_pc[1] <= 32'h8002001c;
 		test_pc[2] <= 32'h80020028;
-		test_pc[3] <= 32'h80020030;
+		test_pc[3] <= 32'h80020030;*/
 		reset <= 1;
 		#10 reset <= 0;
 
-		for(int i=0; i<4; i++) begin
+		for(int i=0; i<17; i++) begin
 			wait(im_addr==test_pc[i])
     			$display("pc %8h, r2 %8h, r3 %8h", im_addr,
 				tb_SimpleAdd.proc.regs.data[2], tb_SimpleAdd.proc.regs.data[3]);

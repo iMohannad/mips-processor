@@ -1,0 +1,70 @@
+tb_BubbleSort output
+====================
+# i=0 j=1 [12,9] j=2 [12,4] j=3 j=4 j=5 [120,1] j=6 [120,3] j=7 [120,10]
+# j=8
+# i=1 j=1 [9,4] j=2 j=3 j=4 [99,1] j=5 [99,3] j=6 [99,10] j=7
+# i=2 j=1 j=2 j=3 [12,1] j=4 [12,3] j=5 [12,10] j=6
+# i=3 j=1 j=2 [9,1] j=3 [9,3] j=4 j=5
+# i=4 j=1 [4,1] j=2 [4,3] j=3 j=4
+# i=5 j=1 j=2 j=3
+# i=6 j=1 j=2
+# i=7 j=1
+# i=8
+
+
+tb_CheckVowel output
+====================
+# ch=C
+# ch=h
+# ch=e
+# vowels=1
+# ch=c
+# ch=k
+# ch=V
+# ch=o
+# vowels=2
+# ch=w
+# ch=e
+# vowels=3
+# ch=l
+# ch=!
+# ch=
+# 
+# ch=
+# ch=
+# ch=
+# ch=
+# ch=
+# ch=
+# ch=
+# ch=
+
+
+tb_fact output
+==============
+# fact(0)=1
+# fact(1)=1
+# fact(2)=2
+# fact(3)=6
+# fact(4)=24
+# fact(5)=120
+# fact(6)=720
+# fact(7)=5040
+# fact(8)=40320
+# fact(9)=362880
+
+
+tb_SimpleIf output
+==================
+# c=7
+
+
+tb_SumArray output
+==================
+# c=45
+
+
+tb_Swap output
+==============
+# a=9, b=5
+# a+b=14
