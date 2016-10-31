@@ -114,7 +114,7 @@ assign aluSrc = opcode[3] | opcode[5];
    else if((opcode == 6'b001001) | (opcode == 6'b100011) | (opcode == 6'b001010) | aluSrc) wr_num = rt;
    else wr_num = rd;
  end*/
- assign wr_num = (opcode == 6'b000011) ? 31 : ((opcode == 6'b001001) | (opcode == 6'b100011) | (opcode == 6'b001010) | aluSrc) ? rt : rd;
+ assign wr_num = (opcode == 6'b000011) ? 31 : (opcode == 6'b011100) ? rd : ((opcode == 6'b001001) | (opcode == 6'b100011) | (opcode == 6'b001010) | aluSrc) ? rt : rd;
 
 
 regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
@@ -124,7 +124,7 @@ regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
 
 //mux to decide which input should go to ALU.
 //if SLTI, take the immidiate. SLTI opcode = 001010
-assign  op2 = aluSrc | (opcode == 6'b001010) ? {{16{imm[15]}}, imm[15:0]} : rd1_data;
+assign  op2 = (aluSrc && (opcode != 6'b011100)) ? {{16{imm[15]}}, imm[15:0]} : rd1_data;
 
 
 
@@ -146,7 +146,7 @@ memory #(.mem_file(mem_variable))
 
 always @ ( * ) begin
   if(opcode == 6'b100011) wr_data_reg = data_out_mem; //in case of load
-  else if (opcode == 6'b000011) wr_data_reg = pc_out + 8; //in case of JAL
+  else if (opcode == 6'b000011) wr_data_reg = pc_out + 4; //in case of JAL
   else wr_data_reg = data_out_alu;
 end
 

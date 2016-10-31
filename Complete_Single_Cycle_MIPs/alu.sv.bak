@@ -21,18 +21,25 @@ always @ (op1 or op2 or ar_op or shift_amount) begin
     6'b001001: data_out_alu <= op1 + op2; //AddU
     6'b101011: data_out_alu <= op1 + op2; //SW
     6'b100011: data_out_alu <= op1 + op2;
+    6'b011100: data_out_alu <= (op1 * op2) << 31 >> 31; //MUL
+    6'b001010: begin
+      if (op1 < op2) data_out_alu <= 1;
+      else data_out_alu <= 0;
+    end
     default: begin
 
       case(ar_op)
         6'b100001: data_out_alu <= op1 + op2;
-        6'b000000: data_out_alu <= 0;
+        6'b000000: begin
+          if(op1 == 0) data_out_alu <= op2 << shift_amount;
+          else data_out_alu <= 0;
+        end
         6'b100011: data_out_alu <= op1 - op2;
         6'b101011: data_out_alu <= op1 + op2;
         6'b101010: begin
           if(op1 < op2) data_out_alu <= 1;
           else data_out_alu <= 0;
-        end        
-        6'b000000: if(op1 == 0) data_out_alu <= op1 << shift_amount;
+        end
 
       endcase
     end

@@ -20,7 +20,7 @@ module tb_BubbleSort;
 		dmem(.clk(clk), .addr(dm_addr), .data_in(dm_din), .data_out(dm_dout),
 		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset));*/
 
-	mips #(.mem_variable("BubbleSort.x"), .pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0))
+	mips #(.pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0))
 		proc(.clk(clk), .reset(reset),
 		.instr_addr(im_addr), .instr_in(im_dout),
 		.data_addr(dm_addr), .data_in(dm_dout), .data_out(dm_din),
@@ -93,7 +93,7 @@ module tb_fact;
 		dmem(.clk(clk), .addr(dm_addr), .data_in(dm_din), .data_out(dm_dout),
 		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset));*/
 
-	mips #(.mem_variable("fact.x"), .pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0))
+	mips #(.pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0))
 		proc(.clk(clk), .reset(reset),
 		.instr_addr(im_addr), .instr_in(im_dout),
 		.data_addr(dm_addr), .data_in(dm_dout), .data_out(dm_din),
