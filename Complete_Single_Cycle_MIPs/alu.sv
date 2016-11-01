@@ -22,6 +22,9 @@ always @ (op1 or op2 or ar_op or shift_amount) begin
     6'b101011: data_out_alu <= op1 + op2; //SW
     6'b100011: data_out_alu <= op1 + op2;
     6'b011100: data_out_alu <= op1 * op2; //MUL
+    6'b001111: data_out_alu <= op2[15:0] << 16; //LUI
+    6'b100100: data_out_alu <= op1 + op2; //lbu
+    6'b101000: data_out_alu <= op1 + op2; //SB
     6'b001010: begin
       if (op1 < op2) data_out_alu <= 1;
       else data_out_alu <= 0;

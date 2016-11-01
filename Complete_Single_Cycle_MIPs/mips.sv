@@ -10,7 +10,7 @@
 module mips (
     input clk,
     input reset,
-    input data_access_size,
+    output [1:0] data_access_size,
     output [31:0] instr_addr,
     output [31:0] instr_in,
     output [31:0] data_addr,
@@ -75,7 +75,7 @@ logic [31:0] data_out_mem;  //the output from data memory
 logic busy_data_mm;  //a signal indicates if the data memory is busy
 wire memToReg;  //either takes the data from memory or from ALU in write back stage
 wire dm_rw;
-
+logic [1:0] dm_access_sz;
 
 //Assigning output for testbench
 assign data_addr = data_out_alu;
@@ -133,11 +133,15 @@ alu alu(.op1(A), .op2(B), .opcode(opcode), .ar_op(func), .shift_amount(shift_amo
 
 //dm_rw sets to 0 (writing) in case of store word only.
 //counter is checked to avoid wriing previous or subsequent instructions
-assign dm_rw = (opcode == 6'b101011 && counter == 3) ? 0 : 1;
+assign dm_rw = ((opcode == 6'b101011 || opcode == 6'b101000) && counter == 3) ? 0 : 1;
 
+
+//check if the command is lbu or sb
+
+assign dm_access_sz = ((opcode == 6'b100100) | (opcode == 6'b101000)) ? 2'b00 : 2'b01;
 
 memory #(.mem_file(mem_variable))
-  data_memory(.clk(clk), .addr(data_out_alu), .data_in(rd1_data), .access_size(im_access_sz), .rd_wr(dm_rw),
+  data_memory(.clk(clk), .addr(data_out_alu), .data_in(rd1_data), .access_size(dm_access_sz), .rd_wr(dm_rw),
   .enable(~reset), .data_out(data_out_mem), .busy(busy_data_mm));
 
 
@@ -146,6 +150,7 @@ memory #(.mem_file(mem_variable))
 
 always @ ( * ) begin
   if(opcode == 6'b100011) wr_data_reg = data_out_mem; //in case of load
+  else if(opcode == 6'b100100) wr_data_reg = data_out_mem;
   else if (opcode == 6'b000011) wr_data_reg = pc_out + 4; //in case of JAL
   else wr_data_reg = data_out_alu;
 end
@@ -172,6 +177,8 @@ always @ (posedge clk) begin
         counter <= counter + 1;
       end
       2: begin
+        // if((opcode == 6'b100100) || (opcode == 6'b101000)) dm_access_sz <= sz_byte;
+        // else dm_access_sz <= sz_word;
         counter <= counter + 1;
       end
       3: begin
@@ -182,12 +189,12 @@ always @ (posedge clk) begin
          */
         //Branch if equal to zero
         if(opcode == 6'b000100) begin
-          if(rd0_data == 0) pc_in <= pc_out + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
+          if(rd0_data == rd1_data) pc_in <= pc_out + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
           else pc_in <= next_pc;
         end
         //Branch if not equal to zero
         else if(opcode == 6'b000101) begin
-          if(rd0_data != 0) pc_in <= pc_out + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
+          if(rd0_data != rd1_data) pc_in <= pc_out + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
           else pc_in <= next_pc;
         end
         else if(opcode == 6'b000011 | opcode == 6'b000010) begin //jump instructions
