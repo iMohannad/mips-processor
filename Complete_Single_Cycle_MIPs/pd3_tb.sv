@@ -107,9 +107,9 @@ module tb_fact;
         reset <= 1;
 		#10 reset <= 0;
 
-		forever wait(im_addr==32'h80020024 || im_addr==32'h80020028 ||
+		forever wait(im_addr==32'h80020020 || im_addr==32'h80020028 ||
 			im_addr==0)
-			if(im_addr==32'h80020024) begin
+			if(im_addr==32'h80020020) begin
    				$write("fact(%0d)=", tb_fact.proc.regs.data[4]);
 				#100 ;
 			end
