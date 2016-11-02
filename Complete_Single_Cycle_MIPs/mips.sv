@@ -100,7 +100,7 @@ decode decoder(.instruction(instruction), .opcode(opcode), .rs(rs), .rt(rt), .rd
 
 
 //enable writing on register file
-wire wr_en_reg = ((opcode != 6'b101011 & opcode != 000100 & opcode != 6'b000010 & opcode != 6'b000101) && counter == 4) ? 1 : 0;
+wire wr_en_reg = ((opcode != 6'b101011 & opcode != 000100 & opcode != 6'b000010 & opcode != 6'b000101 & opcode != 6'b101000) && counter == 4) ? 1 : 0;
 
 
 assign aluSrc = opcode[3] | opcode[5];
@@ -150,7 +150,7 @@ memory #(.mem_file(mem_variable))
 
 always @ ( * ) begin
   if(opcode == 6'b100011) wr_data_reg = data_out_mem; //in case of load
-  else if(opcode == 6'b100100) wr_data_reg = data_out_mem;
+  else if(opcode == 6'b100100) wr_data_reg = data_out_mem; //LBU
   else if (opcode == 6'b000011) wr_data_reg = pc_out + 4; //in case of JAL
   else wr_data_reg = data_out_alu;
 end
@@ -177,8 +177,6 @@ always @ (posedge clk) begin
         counter <= counter + 1;
       end
       2: begin
-        // if((opcode == 6'b100100) || (opcode == 6'b101000)) dm_access_sz <= sz_byte;
-        // else dm_access_sz <= sz_word;
         counter <= counter + 1;
       end
       3: begin
@@ -208,6 +206,7 @@ always @ (posedge clk) begin
         counter <= counter + 1;
       end
       4: begin
+
         counter <= 0;
       end
 

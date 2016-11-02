@@ -68,7 +68,7 @@ always@(posedge clk) begin
            else if(byteaccess == 1) data_out[7:0] <= mem[pointer] >> 16;
            else if(byteaccess == 2) data_out[7:0] <= mem[pointer] >> 8;
            else if(byteaccess == 3) data_out[7:0] <= mem[pointer];
-           data_out[31:8] <= 'z;  //add z to the rest of the word.
+           data_out[31:8] <= '0;  //add z to the rest of the word.
          end
        end
 

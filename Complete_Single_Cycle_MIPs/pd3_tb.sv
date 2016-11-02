@@ -44,13 +44,13 @@ module tb_BubbleSort;
 				tb_BubbleSort.proc.regs.data[31]);
 		*/
 
-		forever wait(im_addr==32'h80020184 || im_addr==32'h80020168
+		forever wait(im_addr==32'h80020184 || im_addr==32'h80020164
 				|| im_addr==32'h800200e8 || im_addr==0)
 			if(im_addr==32'h80020184) begin
    				$write("\ni=%0d", tb_BubbleSort.proc.regs.data[3]);
 				#100 ;
 			end
-			else if(im_addr==32'h80020168) begin
+			else if(im_addr==32'h80020164) begin
    				$write(" j=%0d", tb_BubbleSort.proc.regs.data[2]);
 				#100 ;
 			end
