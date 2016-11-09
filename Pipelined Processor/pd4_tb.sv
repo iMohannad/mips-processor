@@ -9,24 +9,24 @@ module tb_test;
 	logic im_rw = 1;
 	logic [1:0] im_access_sz = sz_word;
 	logic [31:0] im_addr, im_dout;
-    memory #(.mem_file("test.x"))
+  /*  memory #(.mem_file("test.x"))
 		imem(.clk(clk), .addr(im_addr), .data_out(im_dout),
-		.access_size(im_access_sz), .rd_wr(im_rw), .enable(~reset));
+		.access_size(im_access_sz), .rd_wr(im_rw), .enable(~reset));*/
 
 	// data memory
 	logic dm_rw;
 	logic [31:0] dm_addr, dm_din, dm_dout;
 	logic [1:0] dm_access_sz;
-    memory #(.mem_file("test.x"))
+/*    memory #(.mem_file("test.x"))
 		dmem(.clk(clk), .addr(dm_addr), .data_in(dm_din), .data_out(dm_dout),
-		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset));
+		.access_size(dm_access_sz), .rd_wr(dm_rw), .enable(~reset));*/
 
-	mips #(.pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0))
+	mips #(.pc_init(mem_start), .sp_init(mem_start+mem_depth), .ra_init(0), .mem_variable("test.x"))
 		proc(.clk(clk), .reset(reset),
 		.instr_addr(im_addr), .instr_in(im_dout),
 		.data_addr(dm_addr), .data_in(dm_dout), .data_out(dm_din),
 		.data_access_size(dm_access_sz),.data_rd_wr(dm_rw));
- 
+
     initial begin
         clk = 1; forever #5 clk = ~clk;
     end

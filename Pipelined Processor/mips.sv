@@ -88,6 +88,7 @@ assign data_rd_wr = dm_rw;
 //IF/ID
 wire [31:0] pc_if_id;
 wire [31:0] IR_if_id;
+//wire [31:0] next_pc_if_id;
 
 //ID/EX
 wire [5:0] opcode_id_ex;
@@ -103,9 +104,10 @@ wire [4:0] shift_amount_id_ex;
 wire [5:0] func_id_ex;
 wire [31:0] pc_id_ex;
 wire [4:0] rs_id_ex;
+// [31:0] next_pc_id_ex;
 
 //EX/MM
-wire [31:0] opcode_ex_mm;
+wire [5:0] opcode_ex_mm;
 wire [31:0] data_out_alu_ex_mm;
 wire [31:0] rd1_data_ex_mm;
 wire [1:0] dm_access_sz_ex_mm;
@@ -120,6 +122,8 @@ wire [31:0] data_out_mem_wb;
 wire [5:0] opcode_mm_wb;
 wire [31:0] pc_mm_wb;
 wire [31:0] data_out_alu_wb;
+wire [4:0] wr_num_mm_wb;
+wire wr_en_reg_mm_wb;
 
 pc pc(.clk(clk), .reset(reset), .pc_in(pc_in), .pc_out(pc_out), .next_pc(next_pc));
 
@@ -151,7 +155,7 @@ assign aluSrc = (opcode == 6'b011100)? 0 : (opcode[3] | opcode[5]);
 
 
 regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
-  regs(.clk(clk), .reset(reset), .wr_num(wr_num), .wr_data(wr_data_reg), .wr_en(wr_en_reg),
+  regs(.clk(clk), .reset(reset), .wr_num(wr_num_mm_wb), .wr_data(wr_data_reg), .wr_en(wr_en_reg_mm_wb),
   .rd0_num(rs), .rd0_data(rd0_data), .rd1_num(rt), .rd1_data(rd1_data));
 
 
@@ -192,7 +196,8 @@ memory #(.mem_file(mem_variable))
 
 
 mm_wb mm_wb(.clk(clk), .data_out_mem(data_out_mem), .opcode_ex_mm(opcode_ex_mm), .pc_ex_mm(pc_ex_mm), .data_out_alu_ex_mm(data_out_alu_ex_mm),
-  .data_out_mem_wb(data_out_mem_wb), .opcode_mm_wb(opcode_mm_wb), .pc_mm_wb(pc_mm_wb), .data_out_alu_wb(data_out_alu_wb));
+  .data_out_mem_wb(data_out_mem_wb), .opcode_mm_wb(opcode_mm_wb), .pc_mm_wb(pc_mm_wb), .data_out_alu_wb(data_out_alu_wb), .wr_en_reg_ex_mm(wr_en_reg_ex_mm),
+  .wr_en_reg_mm_wb(wr_en_reg_mm_wb), .wr_num_ex_mm(wr_num_ex_mm), .wr_num_mm_wb(wr_num_mm_wb));
 
 always @ ( * ) begin
   if(opcode_mm_wb == 6'b100011) wr_data_reg = data_out_mem_wb; //in case of load
@@ -228,7 +233,7 @@ always @ (posedge clk) begin
       else pc_in <= next_pc;
     end
     else if(opcode_id_ex == 6'b000011 | opcode_id_ex == 6'b000010) begin //jump instructions
-      pc_in <= {pc_id_ex[31:28], rs, rt, imm_id_ex, 2'b00};
+      pc_in <= {pc_id_ex[31:28], rs_id_ex, rt, imm_id_ex, 2'b00};
     end
     else if(rs_id_ex == 5'b11111 && func_id_ex == 6'b001000) begin
       pc_in <= rd0_data_id_ex;
