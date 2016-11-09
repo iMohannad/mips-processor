@@ -9,7 +9,7 @@ module pc (
 
 
 
-always @ (posedge clk) begin
+always @ (*) begin
   if (reset) begin
     pc_out <= mem_start;
     next_pc <= mem_start;
