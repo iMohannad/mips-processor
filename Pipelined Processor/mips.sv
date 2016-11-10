@@ -66,29 +66,18 @@ wire [4:0] wr_num;  //the register number in writeback stage
 logic [31:0] data_out_alu;  //data coming out from alu
 wire [31:0] op2;
 logic aluSrc;
-//two registers which saves op1 and op2 repectively to make alu run in 3rd cycle
-logic [31:0] A, B;
-//logic [31:0] data_alu_reg; //register to hold the data coming out from alu
 
 //DM Variables
 logic [31:0] data_out_mem;  //the output from data memory
 logic busy_data_mm;  //a signal indicates if the data memory is busy
-wire memToReg;  //either takes the data from memory or from ALU in write back stage
 wire dm_rw;
 logic [1:0] dm_access_sz;
 
-//Assigning output for testbench
-assign data_addr = data_out_alu;
-assign data_in = A;
-assign data_out = data_out_mem;
-//to assign the output of memory writing to a pin in the processor - used in testbench
-assign data_rd_wr = dm_rw;
 
 //Pipeline Wires
 //IF/ID
 wire [31:0] pc_if_id;
 wire [31:0] IR_if_id;
-//wire [31:0] next_pc_if_id;
 
 //ID/EX
 wire [5:0] opcode_id_ex;
@@ -104,7 +93,6 @@ wire [4:0] shift_amount_id_ex;
 wire [5:0] func_id_ex;
 wire [31:0] pc_id_ex;
 wire [4:0] rs_id_ex;
-// [31:0] next_pc_id_ex;
 
 //EX/MM
 wire [5:0] opcode_ex_mm;
@@ -125,6 +113,17 @@ wire [31:0] data_out_alu_wb;
 wire [4:0] wr_num_mm_wb;
 wire wr_en_reg_mm_wb;
 
+
+
+//Assigning output for testbench
+assign data_addr = data_out_alu;
+assign data_in = rd1_data_ex_mm;
+assign data_out = data_out_mem;
+//to assign the output of memory writing to a pin in the processor - used in testbench
+assign data_rd_wr = dm_rw;
+
+//************************************************************************************************//
+
 pc pc(.clk(clk), .reset(reset), .pc_in(pc_in), .pc_out(pc_out), .next_pc(next_pc));
 
 
@@ -143,14 +142,15 @@ decode decoder(.instruction(IR_if_id), .opcode(opcode), .rs(rs), .rt(rt), .rd(rd
 wire wr_en_reg = ((opcode != 6'b101011 & opcode != 000100 & opcode != 6'b000010 & opcode != 6'b000101 & opcode != 6'b101000)) ? 1 : 0;
 
 //aluSrc decide which is the wright back register.
-//It will not work in case of MUL so I added a condition in selecting op2.
+/* MUL Opcode 011100 will result in aluSrc = 1 which will select rt as the wrtie back register,
+ * and since the result of MUL instruction should be written back in rd, I added a condition here
+ */
 assign aluSrc = (opcode == 6'b011100)? 0 : (opcode[3] | opcode[5]);
 
 /* wr_num is the register we are writing back into in regFile.
  * if it's load instruction, the write back register is rt
  * otherwise, it should be rd
  */
-
  assign wr_num = (opcode == 6'b000011) ? 31 : (opcode == 6'b011100) ? rd : ((opcode == 6'b001001) | (opcode == 6'b100011) | (opcode == 6'b001010) | aluSrc) ? rt : rd;
 
 
@@ -159,10 +159,10 @@ regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
   .rd0_num(rs), .rd0_data(rd0_data), .rd1_num(rt), .rd1_data(rd1_data));
 
 
-  id_ex id_ex (.clk(clk), .pc_if_id(pc_if_id), .rs(rs), .opcode(opcode), .aluSrc(aluSrc), .wr_en_reg(wr_en_reg), .wr_num(wr_num), .dm_rw(dm_rw), .dm_access_sz(dm_access_sz),
+  id_ex id_ex (.clk(clk), .pc_if_id(pc_if_id), .opcode(opcode), .aluSrc(aluSrc), .wr_en_reg(wr_en_reg), .wr_num(wr_num), .dm_rw(dm_rw), .dm_access_sz(dm_access_sz),
     .rd0_data(rd0_data), .rd1_data(rd1_data), .imm(imm), .shift_amount(shift_amount), .func(func), .opcode_id_ex(opcode_id_ex), .aluSrc_id_ex(aluSrc_id_ex),
     .wr_en_reg_id_ex(wr_en_reg_id_ex), .wr_num_id_ex(wr_num_id_ex), .dm_rw_id_ex(dm_rw_id_ex), .dm_access_sz_id_ex(dm_access_sz_id_ex), .rd0_data_id_ex(rd0_data_id_ex),
-    .rd1_data_id_ex(rd1_data_id_ex), .imm_id_ex(imm_id_ex), .shift_amount_id_ex(shift_amount_id_ex), .func_id_ex(func_id_ex), .pc_id_ex(pc_id_ex), .rs_id_ex(rs_id_ex));
+    .rd1_data_id_ex(rd1_data_id_ex), .imm_id_ex(imm_id_ex), .shift_amount_id_ex(shift_amount_id_ex), .func_id_ex(func_id_ex), .pc_id_ex(pc_id_ex));
 
 
 
@@ -199,6 +199,8 @@ mm_wb mm_wb(.clk(clk), .data_out_mem(data_out_mem), .opcode_ex_mm(opcode_ex_mm),
   .data_out_mem_wb(data_out_mem_wb), .opcode_mm_wb(opcode_mm_wb), .pc_mm_wb(pc_mm_wb), .data_out_alu_wb(data_out_alu_wb), .wr_en_reg_ex_mm(wr_en_reg_ex_mm),
   .wr_en_reg_mm_wb(wr_en_reg_mm_wb), .wr_num_ex_mm(wr_num_ex_mm), .wr_num_mm_wb(wr_num_mm_wb));
 
+
+//MUX to decide the data written back to regfile
 always @ ( * ) begin
   if(opcode_mm_wb == 6'b100011) wr_data_reg = data_out_mem_wb; //in case of load
   else if(opcode_mm_wb == 6'b100100) wr_data_reg = data_out_mem_wb; //LBU
@@ -213,7 +215,6 @@ always @ (posedge clk) begin
   if (reset) begin
     pc_in <= mem_start;
     counter <= 0;
-
   end
   else begin
 
@@ -223,20 +224,20 @@ always @ (posedge clk) begin
      * be the input of the instruction memory
      */
     //Branch if equal to zero
-    if(opcode_id_ex == 6'b000100) begin
-      if(rd0_data_id_ex == rd1_data_id_ex) pc_in <= pc_id_ex + 4 + {{14{imm_id_ex[15]}},imm_id_ex[15:0], 2'b00};
+    if(opcode == 6'b000100) begin
+      if(rd0_data == rd1_data) pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
       else pc_in <= next_pc;
     end
     //Branch if not equal to zero
-    else if(opcode_id_ex == 6'b000101) begin
-      if(rd0_data_id_ex != rd1_data_id_ex) pc_in <= pc_id_ex + 4 + {{14{imm_id_ex[15]}},imm_id_ex[15:0], 2'b00};
+    else if(opcode == 6'b000101) begin
+      if(rd0_data != rd1_data) pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
       else pc_in <= next_pc;
     end
-    else if(opcode_id_ex == 6'b000011 | opcode_id_ex == 6'b000010) begin //jump instructions
-      pc_in <= {pc_id_ex[31:28], rs_id_ex, rt, imm_id_ex, 2'b00};
+    else if(opcode == 6'b000011 | opcode == 6'b000010) begin //jump instructions
+      pc_in <= {pc_if_id[31:28], rs, rt, imm, 2'b00};
     end
-    else if(rs_id_ex == 5'b11111 && func_id_ex == 6'b001000) begin
-      pc_in <= rd0_data_id_ex;
+    else if(rs == 5'b11111 && func == 6'b001000) begin
+      pc_in <= rd0_data;
     end else begin
       pc_in <= next_pc;
     end

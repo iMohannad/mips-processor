@@ -12,9 +12,6 @@ module id_ex (
   input [15:0] imm,
   input [4:0] shift_amount,
   input [5:0] func,
-  input [4:0] rs,
-  //input [31:0] next_pc_if_id,
-  output reg [4:0] rs_id_ex,
   output reg [5:0] opcode_id_ex,
   output reg aluSrc_id_ex,
   output reg wr_en_reg_id_ex,
@@ -27,7 +24,6 @@ module id_ex (
   output reg [4:0] shift_amount_id_ex,
   output reg [5:0] func_id_ex,
   output reg [31:0] pc_id_ex
-  //output reg [31:0] next_pc_id_ex
   );
 
   always @ (posedge clk) begin
@@ -44,6 +40,5 @@ module id_ex (
     pc_id_ex <= pc_if_id;
     wr_num_id_ex <= wr_num;
 
-  //  next_pc_id_ex <= next_pc_if_id;
   end
 endmodule // id_ex
