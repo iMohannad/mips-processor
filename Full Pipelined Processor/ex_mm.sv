@@ -1,5 +1,6 @@
 module ex_mm (
   input clk,
+  input flushm,
   input [31:0] data_out_alu,
   input [31:0] rd1_data_id_ex,
   input [1:0] dm_access_sz_id_ex,
@@ -19,14 +20,25 @@ module ex_mm (
   );
 
   always @ (posedge clk) begin
-    data_out_alu_ex_mm <= data_out_alu;
-    rd1_data_ex_mm <= rd1_data_id_ex;
-    dm_access_sz_ex_mm <= dm_access_sz_id_ex;
-    dm_rw_ex_mm <= dm_rw_id_ex;
-    pc_ex_mm <= pc_id_ex;
-    wr_en_reg_ex_mm <= wr_en_reg_id_ex;
-    wr_num_ex_mm <= wr_num_id_ex;
-    opcode_ex_mm <= opcode_id_ex;
+    if (flushm) begin
+      data_out_alu_ex_mm <= 0;
+      rd1_data_ex_mm <= 0;
+      dm_access_sz_ex_mm <= 0;
+      dm_rw_ex_mm <= 0;
+      pc_ex_mm <= 0;
+      wr_en_reg_ex_mm <= 0;
+      wr_num_ex_mm <= 0;
+      opcode_ex_mm <= 0;
+    end else begin
+      data_out_alu_ex_mm <= data_out_alu;
+      rd1_data_ex_mm <= rd1_data_id_ex;
+      dm_access_sz_ex_mm <= dm_access_sz_id_ex;
+      dm_rw_ex_mm <= dm_rw_id_ex;
+      pc_ex_mm <= pc_id_ex;
+      wr_en_reg_ex_mm <= wr_en_reg_id_ex;
+      wr_num_ex_mm <= wr_num_id_ex;
+      opcode_ex_mm <= opcode_id_ex;
+    end
   end
 
 endmodule // ex_mm
