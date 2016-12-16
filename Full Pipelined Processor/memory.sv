@@ -16,8 +16,10 @@ module memory (
  * and the increment between every word in memory is 1. because each word
  * is stored in one cell.
  */
+ parameter depth = 2**21;
+
 parameter offset = 'h80020000;
-reg [31:0] mem [0:(mem_depth/4)-1];
+reg [31:0] mem [0:(depth/4)-1];
 
 //populate the memory with mem_file
 initial $readmemh(mem_file, mem);

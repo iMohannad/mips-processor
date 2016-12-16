@@ -1,10 +1,62 @@
-# time  70, v0 1
-# time  80, s0 2
-# time  90, s1 3
-# time 100, s2 4
-# time 120, v1 1
-# time 160, v0 0
-# time 160, pc 8002003c
-# time 170, pc 80020048
-# time 180, pc 8002004c
-# time 190, pc 00000000
+tb_BubbleSort output
+====================
+# i=0 j=1 j=2 j=3 j=4 j=5 j=6 j=7
+# i=1 j=1 j=2 j=3 j=4 j=5 j=6
+# i=2 j=1 j=2 j=3 j=4 j=5
+# i=3 j=1 j=2 j=3 j=4
+# i=4 j=1 j=2 j=3
+# i=5 j=1 j=2
+# i=6 j=1
+# i=7
+# time 13780
+
+tb_CheckVowel output
+====================
+# time  2400, ch=e
+# time  5800, ch=o
+# time  7080, ch=e
+
+
+tb_fact output
+==============
+# time   210, fact(0)=1
+# time   540, fact(1)=1
+# time  1130, fact(2)=2
+# time  1980, fact(3)=6
+# time  3090, fact(4)=24
+# time  4460, fact(5)=120
+# time  6090, fact(6)=720
+# time  7980, fact(7)=5040
+# time 10130, fact(8)=40320
+# time 12540, fact(9)=362880
+
+
+tb_SimpleAdd output
+===================
+# time 200, c=5
+
+
+tb_SimpleIf output
+==================
+# time 320, c=7
+
+
+tb_SumArray output
+==================
+# time  1960, sum 0
+# time  2140, sum 1
+# time  2320, sum 3
+# time  2500, sum 6
+# time  2680, sum 10
+# time  2860, sum 15
+# time  3040, sum 21
+# time  3220, sum 28
+# time  3400, sum 36
+# time  3580, sum 45
+
+
+tb_Swap output
+==============
+# time 530, a 9
+# time 570, b 5
+# time 620, a+b 14

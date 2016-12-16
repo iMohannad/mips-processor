@@ -127,13 +127,12 @@ assign data_rd_wr = dm_rw;
 logic stall = 0;
 logic stalld = 0;
 logic flushx = 0;
-logic flushd = 0;
+logic flushd;
 logic flushm = 0;
 
 
 wire [1:0] forwardA = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs_id_ex)) ? 2'b01 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rs_id_ex) && (wr_num_mm_wb == rs_id_ex)) ? 2'b10 : 2'b00;
-wire [1:0] forwardB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt_id_ex)) ? 2'b01 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rs_id_ex) && (wr_num_mm_wb == rt_id_ex)) ? 2'b10 : 2'b00;
-
+wire [1:0] forwardB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt_id_ex)) ? 2'b01 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rt_id_ex) && (wr_num_mm_wb == rt_id_ex)) ? 2'b10 : 2'b00;
 
 //************************************************************************************************//
 
@@ -151,7 +150,12 @@ wire [4:0] rt_if = instruction[20:16];
 wire [15:0] imm_if = instruction[15:0];
 
 
-if_id if_id(.clk(clk), .stall(stalld), .flush(flushd), .IR(instruction), .pc_out(pc_out), .pc_if_id(pc_if_id), .IR_if_id(IR_if_id));
+//For Branch
+wire [1:0] branchA = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs_if)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rs_if)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rs_if)) ? 2'b10 : 2'b00;
+wire [1:0] branchB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt_if)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rt_if)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rt_if)) ? 2'b10 : 2'b00;
+
+
+if_id if_id(.clk(clk), .stall(stalld), .IR(instruction), .pc_out(pc_out), .pc_if_id(pc_if_id), .IR_if_id(IR_if_id));
 
 logic [31:0] IR_reg;
 
@@ -185,14 +189,47 @@ regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
  * in this case only
  */
 logic [31:0] rd0_datax;
+logic [31:0] rd1_datax;
 always @ ( * ) begin
-  if (opcode_mm_wb == 6'b100011 && stalld == 1) begin
+  // if (wr_en_reg_ex_mm && opcode_ex_mm == 6'b100011 && stalld == 1) begin
+  //   rd0_datax <= wr_data_reg;
+  // end
+  if (wr_en_reg_mm_wb && opcode_mm_wb == 6'b100011 && stalld == 1) begin
     rd0_datax <= wr_data_reg;
-  end else  rd0_datax <= rd0_data;
+  end
+  else if (flushx) begin
+    rd0_datax <= rd0_data;
+  end
+  else if(wr_en_reg_mm_wb && wr_num_mm_wb == rs ) rd0_datax <= wr_data_reg;
+  else  rd0_datax <= rd0_data;
+
+  if(wr_en_reg_mm_wb && wr_num_mm_wb == rt ) rd1_datax <= wr_data_reg;
+  else rd1_datax <= rd1_data;
+end
+
+logic [31:0] brA;
+logic [31:0] brB;
+
+
+always @ ( * ) begin
+  case (branchA)
+    2'b00: brA <= rd0_datax;
+    2'b01: brA <= data_out_alu_ex_mm;
+    2'b10: brA <= wr_data_reg;
+    2'b11: brA <= data_out_alu;
+    default: brA <= rd0_datax;
+  endcase
+  case (branchB)
+    2'b00: brB <= rd1_datax;
+    2'b01: brB <= data_out_alu_ex_mm;
+    2'b10: brA <= wr_data_reg;
+    2'b11: brB <= data_out_alu;
+    default: brB <= rd1_datax;
+  endcase
 end
 
   id_ex id_ex (.clk(clk), .stall(stall), .flush(flushx), .pc_if_id(pc_if_id), .opcode(opcode), .rs(rs), .rt(rt), .aluSrc(aluSrc), .wr_en_reg(wr_en_reg), .wr_num(wr_num), .dm_rw(dm_rw), .dm_access_sz(dm_access_sz),
-    .rd0_data(rd0_datax), .rd1_data(rd1_data), .imm(imm), .shift_amount(shift_amount), .func(func), .opcode_id_ex(opcode_id_ex), .aluSrc_id_ex(aluSrc_id_ex),
+    .rd0_data(rd0_datax), .rd1_data(rd1_datax), .imm(imm), .shift_amount(shift_amount), .func(func), .opcode_id_ex(opcode_id_ex), .aluSrc_id_ex(aluSrc_id_ex),
     .wr_en_reg_id_ex(wr_en_reg_id_ex), .wr_num_id_ex(wr_num_id_ex), .dm_rw_id_ex(dm_rw_id_ex), .dm_access_sz_id_ex(dm_access_sz_id_ex), .rd0_data_id_ex(rd0_data_id_ex),
     .rd1_data_id_ex(rd1_data_id_ex), .imm_id_ex(imm_id_ex), .shift_amount_id_ex(shift_amount_id_ex), .func_id_ex(func_id_ex), .pc_id_ex(pc_id_ex), .rs_id_ex(rs_id_ex), .rt_id_ex(rt_id_ex));
 
@@ -270,13 +307,32 @@ always @ ( * ) begin
    * 1) stall the IF and ID stages by stopping the cycle of PC.
    * 2) propoagte a NOOP to the EX stage.
    */
-   if ((wr_num_id_ex == rs || wr_num_id_ex == rt) && (opcode_id_ex == 6'b100011)) begin
+   if ((wr_num_id_ex == rs_if || wr_num_id_ex == rt_if) && (opcode_id_ex == 6'b100011 || opcode_id_ex == 6'b100100)) begin
      stall = 1;
      flushx = 1;
      counterx = 1;
-
    end
 end
+
+assign flushd = (!stalld && opcode_if == 6'b000101 && brA != brB) || (opcode == 6'b000100 && !stalld && brA == brB)? 1 : 0;
+// assgin flushd = (!stalld && opcode_if == 6'b000101 && brA != brB) ? 1 : 0;
+// always @ ( * ) begin
+//   if (opcode == 6'b000100 && !stalld ) begin
+//     if(brA == brB) begin
+//       flushd = 1;
+//       //flushx = 1;
+//     end
+//     else  flushd = 0;
+//   end
+//   else if(opcode_if == 6'b000101 && stalld != 1) begin
+//     if(brA != brB) begin
+//       flushd = 1;
+//       //flushx = 1;
+//     end
+//     else flushd = 0;
+//   end
+//   //if (opcode_if == 6'b000011 | opcode_if == 6'b000010) flushx = 1;
+// end
 
 /* Control Unit */
 always @ (posedge clk) begin
@@ -287,16 +343,11 @@ always @ (posedge clk) begin
   else begin
 
     //clear the flush
-    if(flushd)  flushd = 0;
+    //if(flushd)  flushd = 0;
     if(flushx)  flushx = 0;
     if(flushm)  flushm = 0;
-    //Hazard Detection
-    if(stalld)  begin
-      // if(counter == 0)  stalld = 0;
-      // else  counter = counter - 1;
-      stalld = 0;
-    end
 
+    if(counter == 1)  counter = 0;
     //in case of jump, assign PC the output of rs register
     /* It's defined here because PC_in wil take one full cycle to be assigned
      * and then, PC block will take 1 cycle to get the next pc_out which will
@@ -304,40 +355,39 @@ always @ (posedge clk) begin
      */
     //Branch if equal to zero
     if (stall) begin
-      // if(counterx == 0) stall = 0;
-      // else begin
-      //   counterx = counterx - 1;
-        stall = 0;
-        stalld = 1;
-        counter = 1;
-      //end
-    end else if(opcode == 6'b000100) begin
-      if(rd0_data == rd1_data) begin
+      stall = 0;
+      stalld = 1;
+      counter = 1;
+    end else if(opcode == 6'b000100 && !stalld) begin
+      if(brA == brB) begin
         pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
-        stall <= 1;
-        flushx <= 1;
-        flushd <= 1;
+        //flushd <= 1;
       end
       else pc_in <= next_pc;
     end
     //Branch if not equal to zero
-    else if(opcode == 6'b000101) begin
-      if(rd0_data != rd1_data) begin
-        pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
-        flushx <= 1;
-        flushd <= 1;
+    else if(opcode_if == 6'b000101 && stalld != 1) begin
+      if(brA != brB) begin
+        pc_in <= pc_if_id + 4 + {{14{imm_if[15]}},imm_if[15:0], 2'b00};
+        //flushm <= 1;
       end
       else pc_in <= next_pc;
     end
     else if(opcode_if == 6'b000011 | opcode_if == 6'b000010) begin //jump instructions
       pc_in <= {pc_out[31:28], rs_if, rt_if, imm_if, 2'b00};
+      //flushx = 1;
     end
     else if(rs == 5'b11111 && func == 6'b001000) begin //JR
-      pc_in <= rd0_data;
+      pc_in <= rd0_datax;
     end else begin
       pc_in <= next_pc;
     end
 
+
+    //Hazard Detection
+    if(stalld && counter == 0)  begin
+      stalld = 0;
+    end
   end //else statement
 end //always
 

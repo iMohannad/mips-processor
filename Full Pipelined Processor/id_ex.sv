@@ -35,17 +35,17 @@ module id_ex (
   always @ (posedge clk) begin
     if(flush) begin
       opcode_id_ex <= 0;
-      rs_id_ex <= 0;
-      rt_id_ex <= 0;
-      aluSrc_id_ex <= 0;
+      rs_id_ex <= rs;
+      rt_id_ex <= rt;
+      aluSrc_id_ex <= aluSrc;
       wr_en_reg_id_ex <= 0;
-      dm_rw_id_ex <= dm_rw;
-      dm_access_sz_id_ex <= 0;
-      rd0_data_id_ex <= 0;
-      rd1_data_id_ex <= 0;
-      imm_id_ex <= 0;
-      shift_amount_id_ex <= 0;
-      func_id_ex <= 0;
+      dm_rw_id_ex <= 1;
+      dm_access_sz_id_ex <= dm_access_sz;
+      rd0_data_id_ex <= rd0_data;
+      rd1_data_id_ex <= rd1_data;
+      imm_id_ex <= imm;
+      shift_amount_id_ex <= shift_amount;
+      func_id_ex <= func;
       pc_id_ex <= 0;
       wr_num_id_ex <= 0;
     // end else if(stall) begin

@@ -15,7 +15,7 @@ module alu(
    NOP    000000
 */
 
-always @ (op1 or op2 or ar_op or shift_amount) begin
+always @ (op1 or op2 or ar_op or shift_amount or opcode) begin
   case (opcode)
     6'b001000: data_out_alu <= op1 + op2; //ADDIU
     6'b001001: data_out_alu <= op1 + op2; //AddU
