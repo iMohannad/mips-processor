@@ -12,9 +12,9 @@ tb_BubbleSort output
 
 tb_CheckVowel output
 ====================
-# time  2400, ch=e
-# time  5800, ch=o
-# time  7080, ch=e
+# time  2150, ch=e
+# time  5140, ch=o
+# time  6270, ch=e
 
 
 tb_fact output

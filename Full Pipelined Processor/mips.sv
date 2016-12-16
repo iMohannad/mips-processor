@@ -131,7 +131,7 @@ logic flushd;
 logic flushm = 0;
 
 
-wire [1:0] forwardA = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs_id_ex)) ? 2'b01 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rs_id_ex) && (wr_num_mm_wb == rs_id_ex)) ? 2'b10 : 2'b00;
+wire [1:0] forwardA = (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rs_id_ex) && (wr_num_mm_wb == rs_id_ex)) ? 2'b10 : (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs_id_ex)) ? 2'b01 :  2'b00;
 wire [1:0] forwardB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt_id_ex)) ? 2'b01 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_ex_mm != rt_id_ex) && (wr_num_mm_wb == rt_id_ex)) ? 2'b10 : 2'b00;
 
 //************************************************************************************************//
@@ -214,7 +214,7 @@ logic [31:0] brB;
 always @ ( * ) begin
   case (branchA)
     2'b00: brA <= rd0_datax;
-    2'b01: brA <= data_out_alu_ex_mm;
+    2'b01: brA <= rd1_data_ex_mm;
     2'b10: brA <= wr_data_reg;
     2'b11: brA <= data_out_alu;
     default: brA <= rd0_datax;
@@ -222,7 +222,7 @@ always @ ( * ) begin
   case (branchB)
     2'b00: brB <= rd1_datax;
     2'b01: brB <= data_out_alu_ex_mm;
-    2'b10: brA <= wr_data_reg;
+    2'b10: brB <= wr_data_reg;
     2'b11: brB <= data_out_alu;
     default: brB <= rd1_datax;
   endcase
@@ -358,9 +358,9 @@ always @ (posedge clk) begin
       stall = 0;
       stalld = 1;
       counter = 1;
-    end else if(opcode == 6'b000100 && !stalld) begin
+    end else if(opcode_if == 6'b000100 && !stalld) begin
       if(brA == brB) begin
-        pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
+        pc_in <= pc_if_id + 4 + {{14{imm_if[15]}},imm_if[15:0], 2'b00};
         //flushd <= 1;
       end
       else pc_in <= next_pc;
