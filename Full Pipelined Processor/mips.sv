@@ -151,9 +151,10 @@ wire [15:0] imm_if = instruction[15:0];
 
 
 //For Branch
-wire [1:0] branchA = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs_if)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rs_if)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rs_if)) ? 2'b10 : 2'b00;
-wire [1:0] branchB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt_if)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rt_if)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rt_if)) ? 2'b10 : 2'b00;
+wire [1:0] branchA = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rs)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rs)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rs)) ? 2'b10 : 2'b00;
+wire [1:0] branchB = (wr_en_reg_ex_mm && (wr_num_ex_mm != 0) && (wr_num_ex_mm == rt)) ? 2'b01 : (wr_en_reg_id_ex && (wr_num_id_ex != 0) &&  (wr_num_id_ex == rt)) ? 2'b11 : (wr_en_reg_mm_wb && (wr_num_mm_wb != 0) && (wr_num_mm_wb == rt)) ? 2'b10 : 2'b00;
 
+logic stallif = stalld || stall;
 
 if_id if_id(.clk(clk), .stall(stalld), .IR(instruction), .pc_out(pc_out), .pc_if_id(pc_if_id), .IR_if_id(IR_if_id));
 
@@ -200,10 +201,10 @@ always @ ( * ) begin
   else if (flushx) begin
     rd0_datax <= rd0_data;
   end
-  else if(wr_en_reg_mm_wb && wr_num_mm_wb == rs ) rd0_datax <= wr_data_reg;
+  else if(wr_en_reg_mm_wb && wr_num_mm_wb == rs && wr_num_mm_wb != 0 ) rd0_datax <= wr_data_reg;
   else  rd0_datax <= rd0_data;
 
-  if(wr_en_reg_mm_wb && wr_num_mm_wb == rt ) rd1_datax <= wr_data_reg;
+  if(wr_en_reg_mm_wb && wr_num_mm_wb == rt && wr_num_mm_wb != 0) rd1_datax <= wr_data_reg;
   else rd1_datax <= rd1_data;
 end
 
@@ -297,7 +298,7 @@ always @ ( * ) begin
   else wr_data_reg = data_out_alu_wb;
 end
 
-reg [1:0] counterx;
+reg [1:0] counterx = 0;;
 
 always @ ( * ) begin
   /*
@@ -310,7 +311,9 @@ always @ ( * ) begin
    if ((wr_num_id_ex == rs_if || wr_num_id_ex == rt_if) && (opcode_id_ex == 6'b100011 || opcode_id_ex == 6'b100100)) begin
      stall = 1;
      flushx = 1;
-     counterx = 1;
+     if (opcode == 6'b000101 && opcode_id_ex == 6'b100011) begin
+       counterx = 1;
+     end else counterx = 0;
    end
 end
 
@@ -334,6 +337,14 @@ assign flushd = (!stalld && opcode_if == 6'b000101 && brA != brB) || (opcode == 
 //   //if (opcode_if == 6'b000011 | opcode_if == 6'b000010) flushx = 1;
 // end
 
+// logic signal;
+// always @ ( * ) begin
+//   if(opcode == 6'b000101 && opcode_ex_mm == 6'b100011) begin
+//     counterx = 1;
+//     stall = 1;
+//   end else counterx = 0;
+// end
+
 /* Control Unit */
 always @ (posedge clk) begin
   if (reset) begin
@@ -346,8 +357,8 @@ always @ (posedge clk) begin
     //if(flushd)  flushd = 0;
     if(flushx)  flushx = 0;
     if(flushm)  flushm = 0;
-
     if(counter == 1)  counter = 0;
+
     //in case of jump, assign PC the output of rs register
     /* It's defined here because PC_in wil take one full cycle to be assigned
      * and then, PC block will take 1 cycle to get the next pc_out which will
@@ -355,7 +366,9 @@ always @ (posedge clk) begin
      */
     //Branch if equal to zero
     if (stall) begin
-      stall = 0;
+      if(counterx == 0) stall = 0;
+      else stall = 1;
+
       stalld = 1;
       counter = 1;
     end else if(opcode_if == 6'b000100 && !stalld) begin
@@ -366,9 +379,10 @@ always @ (posedge clk) begin
       else pc_in <= next_pc;
     end
     //Branch if not equal to zero
-    else if(opcode_if == 6'b000101 && stalld != 1) begin
+    else if(opcode == 6'b000101 && stall != 1) begin
       if(brA != brB) begin
-        pc_in <= pc_if_id + 4 + {{14{imm_if[15]}},imm_if[15:0], 2'b00};
+        if(opcode_mm_wb == 6'b100011) pc_in <= pc_ex_mm + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
+        else pc_in <= pc_if_id + 4 + {{14{imm[15]}},imm[15:0], 2'b00};
         //flushm <= 1;
       end
       else pc_in <= next_pc;
@@ -383,6 +397,7 @@ always @ (posedge clk) begin
       pc_in <= next_pc;
     end
 
+    if(counterx == 1)  counterx = 0;
 
     //Hazard Detection
     if(stalld && counter == 0)  begin

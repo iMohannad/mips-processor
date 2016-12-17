@@ -13,7 +13,7 @@ module if_id (
 
   assign IR_if_id = (stall) ? IR_if_id : IR;//(flush) ? 0 : (stall) ? IR_if_id : IR;
   always @ (posedge clk ) begin
-    //if (flush)  pc_if_id <= 0;
+    if (flush)  pc_if_id <= 0;
     if (stall) pc_if_id <= pc_if_id;
     else    pc_if_id <= pc_out;
     //IR_if_id <= IR;

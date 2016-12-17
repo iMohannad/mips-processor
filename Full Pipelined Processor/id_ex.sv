@@ -46,7 +46,7 @@ module id_ex (
       imm_id_ex <= imm;
       shift_amount_id_ex <= shift_amount;
       func_id_ex <= func;
-      pc_id_ex <= 0;
+      pc_id_ex <= pc_if_id;
       wr_num_id_ex <= 0;
     // end else if(stall) begin
     //   opcode_id_ex <= opcode_id_ex;

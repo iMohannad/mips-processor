@@ -8,27 +8,27 @@ tb_BubbleSort output
 # i=5 j=1 j=2
 # i=6 j=1
 # i=7
-# time 13780
+# time 14140
 
 tb_CheckVowel output
 ====================
-# time  2150, ch=e
-# time  5140, ch=o
-# time  6270, ch=e
+# time  2180, ch=e
+# time  5210, ch=o
+# time  6360, ch=e
 
 
 tb_fact output
 ==============
-# time   210, fact(0)=1
+# time   200, fact(0)=1
 # time   540, fact(1)=1
-# time  1130, fact(2)=2
-# time  1980, fact(3)=6
-# time  3090, fact(4)=24
-# time  4460, fact(5)=120
-# time  6090, fact(6)=720
-# time  7980, fact(7)=5040
-# time 10130, fact(8)=40320
-# time 12540, fact(9)=362880
+# time  1150, fact(2)=2
+# time  2030, fact(3)=6
+# time  3180, fact(4)=24
+# time  4600, fact(5)=120
+# time  6290, fact(6)=720
+# time  8250, fact(7)=5040
+# time 10480, fact(8)=40320
+# time 12980, fact(9)=362880
 
 
 tb_SimpleAdd output
@@ -43,20 +43,20 @@ tb_SimpleIf output
 
 tb_SumArray output
 ==================
-# time  1960, sum 0
-# time  2140, sum 1
-# time  2320, sum 3
-# time  2500, sum 6
-# time  2680, sum 10
-# time  2860, sum 15
-# time  3040, sum 21
-# time  3220, sum 28
-# time  3400, sum 36
-# time  3580, sum 45
+# time  2070, sum 0
+# time  2260, sum 1
+# time  2450, sum 3
+# time  2640, sum 6
+# time  2830, sum 10
+# time  3020, sum 15
+# time  3210, sum 21
+# time  3400, sum 28
+# time  3590, sum 36
+# time  3780, sum 45
 
 
 tb_Swap output
 ==============
-# time 530, a 9
-# time 570, b 5
+# time 520, a 9
+# time 560, b 5
 # time 620, a+b 14
