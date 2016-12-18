@@ -192,9 +192,7 @@ regfile #(.sp_init(mem_start+mem_depth), .ra_init(0))
 logic [31:0] rd0_datax;
 logic [31:0] rd1_datax;
 always @ ( * ) begin
-  // if (wr_en_reg_ex_mm && opcode_ex_mm == 6'b100011 && stalld == 1) begin
-  //   rd0_datax <= wr_data_reg;
-  // end
+  //Forwarding the wr_data_reg which happens in WB, because the regFile needs one cycle to get data
   if (wr_en_reg_mm_wb && opcode_mm_wb == 6'b100011 && stalld == 1) begin
     rd0_datax <= wr_data_reg;
   end
@@ -311,6 +309,7 @@ always @ ( * ) begin
    if ((wr_num_id_ex == rs_if || wr_num_id_ex == rt_if) && (opcode_id_ex == 6'b100011 || opcode_id_ex == 6'b100100)) begin
      stall = 1;
      flushx = 1;
+     //in case the instruction is load, branch instruction needs to wait until load instruction is in WB stage
      if (opcode == 6'b000101 && opcode_id_ex == 6'b100011) begin
        counterx = 1;
      end else counterx = 0;
@@ -318,32 +317,7 @@ always @ ( * ) begin
 end
 
 assign flushd = (!stalld && opcode_if == 6'b000101 && brA != brB) || (opcode == 6'b000100 && !stalld && brA == brB)? 1 : 0;
-// assgin flushd = (!stalld && opcode_if == 6'b000101 && brA != brB) ? 1 : 0;
-// always @ ( * ) begin
-//   if (opcode == 6'b000100 && !stalld ) begin
-//     if(brA == brB) begin
-//       flushd = 1;
-//       //flushx = 1;
-//     end
-//     else  flushd = 0;
-//   end
-//   else if(opcode_if == 6'b000101 && stalld != 1) begin
-//     if(brA != brB) begin
-//       flushd = 1;
-//       //flushx = 1;
-//     end
-//     else flushd = 0;
-//   end
-//   //if (opcode_if == 6'b000011 | opcode_if == 6'b000010) flushx = 1;
-// end
 
-// logic signal;
-// always @ ( * ) begin
-//   if(opcode == 6'b000101 && opcode_ex_mm == 6'b100011) begin
-//     counterx = 1;
-//     stall = 1;
-//   end else counterx = 0;
-// end
 
 /* Control Unit */
 always @ (posedge clk) begin
@@ -368,7 +342,6 @@ always @ (posedge clk) begin
     if (stall) begin
       if(counterx == 0) stall = 0;
       else stall = 1;
-
       stalld = 1;
       counter = 1;
     end else if(opcode_if == 6'b000100 && !stalld) begin
